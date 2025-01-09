@@ -37,6 +37,22 @@ class AuthController extends Controller
         return $this->respondWithToken($token);
     }
 
+    public function logout(Request $request)
+    {
+        // Mendapatkan token dari header Authorization
+        $token = JWTAuth::getToken();
+    
+        // Jika token ada, invalidasi token
+        if ($token) {
+            JWTAuth::invalidate($token); // Menandai token sebagai tidak valid
+            return response()->json(['message' => 'Successfully logged out'], 200);
+        }
+    
+        // Jika tidak ada token, kirimkan respons error
+        return response()->json(['error' => 'No token provided'], 400);
+    }
+    
+
     protected function respondWithToken($token)
     {
         return response()->json([
