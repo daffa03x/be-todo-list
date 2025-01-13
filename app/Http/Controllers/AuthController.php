@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -17,7 +18,7 @@ class AuthController extends Controller
             'password' => 'required|string|min:6|confirmed',
         ]);
 
-        $user = User::create([
+        User::create([
             'name' => $validatedData['name'],
             'email' => $validatedData['email'],
             'password' => Hash::make($validatedData['password']),
@@ -37,20 +38,23 @@ class AuthController extends Controller
         return $this->respondWithToken($token);
     }
 
-    public function logout(Request $request)
+    public function logout()
     {
-        // Mendapatkan token dari header Authorization
         $token = JWTAuth::getToken();
-    
-        // Jika token ada, invalidasi token
-        if ($token) {
-            JWTAuth::invalidate($token); // Menandai token sebagai tidak valid
-            return response()->json(['message' => 'Successfully logged out'], 200);
+        Log::info('Token received: ', ['token' => $token]); // Log token untuk debugging
+        // return dd($token);
+        if (!$token) {
+            return response()->json(['error' => 'No token provided'], 400);
         }
     
-        // Jika tidak ada token, kirimkan respons error
-        return response()->json(['error' => 'No token provided'], 400);
+        try {
+            JWTAuth::invalidate($token);
+            return response()->json(['message' => 'Successfully logged out'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Could not logout', 'details' => $e->getMessage()], 500);
+        }
     }
+    
     
 
     protected function respondWithToken($token)
